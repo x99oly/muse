@@ -9,7 +9,7 @@ Desenvolver uma ferramenta simples e eficiente em C# para **baixar o áudio de v
 
 ## Como usar
 
-1. Crie uma chave de API no console cloud da google.Veja a documentação completa [aqui](docs/apikey.md)
+1. Crie uma chave de API no console cloud da google.Veja o passo a passo completo [aqui](docs/apikey.md)
 
 
 ## 💡 Motivação
