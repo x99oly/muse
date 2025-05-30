@@ -1,4 +1,5 @@
 # 🎧 MUSE
+Transforme suas playlists de vídeos em coleções de músicas para ouvir onde e quando quiser.
 
 ## 🧠 Objetivo
 
