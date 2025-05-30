@@ -7,6 +7,11 @@ Desenvolver uma ferramenta simples e eficiente em C# para **baixar o áudio de v
 
 ---
 
+## Como usar
+
+1. Crie uma chave de API no console cloud da google.Veja a documentação completa [aqui](docs/apikey.md)
+
+
 ## 💡 Motivação
 
 Com os custos de plataformas de streaming cada vez mais altos, o acesso à música e conteúdo sonoro pode se tornar limitado, especialmente para jovens adultos em situações financeiras apertadas.

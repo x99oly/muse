@@ -14,7 +14,9 @@ Este documento descreve o processo completo para obter uma **chave de API do You
 
 ## 🔧 2. Ativar a YouTube Data API v3
 
-A criação da chave é feita na plataforma cloud.console da google, veja a documentação completa [aqui](docs/apikey.md)
+1. Com o projeto selecionado, vá até **"APIs e Serviços" > "Biblioteca"** no menu lateral.
+2. Busque por **"YouTube Data API v3"**.
+3. Clique sobre ela e, em seguida, clique em **"Ativar"**.
 
 ---
 
