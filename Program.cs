@@ -6,6 +6,13 @@ static class Program
 {
     public static async Task Main(string[] args)
     {
+        string? apiKey = Environment.GetEnvironmentVariable("YOUTUBE_API_KEY");
+
+        if (apiKey is null)
+        {
+            Console.WriteLine("Missing API Key");
+            return;
+        }
         Console.Write("Enter the YouTube playlist URL: ");
         string? playlistUrl = Console.ReadLine();
 
@@ -14,15 +21,7 @@ static class Program
             Console.WriteLine("No valid data was informed.");
             return;
         }
-
         string playlistId = playlistUrl;
-        string? apiKey = Environment.GetEnvironmentVariable("YOUTUBE_API_KEY");
-
-        if (apiKey is null)
-        {
-            Console.WriteLine("Missing API Key");
-            return;
-        }
 
         try
         {

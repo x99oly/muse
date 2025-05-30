@@ -22,17 +22,7 @@ A proposta deste projeto é oferecer uma alternativa simples e prática para esc
 
 ## ✅ Requisitos do Projeto
 
-### Funcionais
-- [ ] Permitir que o usuário informe uma **URL de playlist do YouTube**.
-- [ ] Obter todos os links de vídeos da playlist automaticamente usando a biblioteca `YoutubeExplode`.
-- [ ] Baixar apenas o **áudio** de cada vídeo.
-- [ ] Converter o áudio para o formato **MP3** utilizando `FFmpeg`.
-- [ ] Salvar os arquivos com o nome do vídeo, de forma organizada.
-
-### Não-funcionais
-- [ ] Interface simples em linha de comando (CLI) para começar.
-- [ ] Código modular, claro e fácil de manter.
-- [ ] Uso de bibliotecas estáveis e bem documentadas.
+Veja lista de requisitos [aqui](docs/requirements.md)
 
 ---
 
