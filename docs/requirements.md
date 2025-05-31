@@ -42,7 +42,7 @@
 
 - [x] Usar `YoutubeExplode` para busca e download dos vídeos.
 - [x] Usar `FFmpeg` para conversão de áudio.
-- [ ] Logs para observabilidade da aplicação.
+- [x] Logs para observabilidade da aplicação.
 - [ ] Ter **testes unitários** nas partes críticas.
 - [-] Adotar boas práticas de organização de pastas e separação de responsabilidades.
 
