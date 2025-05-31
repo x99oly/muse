@@ -2,13 +2,15 @@
 using Muse.Src.Clients;
 using Muse.Src.Handlers;
 using Muse.Src.Entities;
+using System.CommandLine;
+using System.CommandLine.NamingConventionBinder;
 
 static class Program
 {
     public static async Task Main(string[] args)
     {
         var fileHandler = new FileHandler();
-        LogHandler logger = new LogHandler(true, true, fileHandler);
+        LogHandler logger = new LogHandler(true, false, fileHandler);
 
         // Log inicial da execução
         var startLog = new LoggerInfo
@@ -19,25 +21,33 @@ static class Program
         logger.Info(startLog);
 
         string apiKey = new ApiKeyHandler(logger).GetApiKey();
-        string? playlistUrl;
         using var client = new HttpClient();
         var downloader = new MusicDownloadService(logger, fileHandler);
         var youtubeApi = new YoutubeApiClient(client, apiKey, downloader, logger);
 
-        do
+        Argument linkArg = new Argument<string>(
+            name: "link",
+            description: "The following url of the video or playlist."
+        );
+
+        Command downloadCommand = new Command("d", "Try download the video or playlist.")
         {
-            var inputLog = new LoggerInfo
-            {
-                Caller = "Program/Main",
-                Message = "Requesting YouTube URL from user"
-            };
-            logger.Info(inputLog);
+            linkArg
+        };
 
-            Console.Write("Enter the YouTube URL: ");
-            playlistUrl = Console.ReadLine();
+        downloadCommand.Handler = CommandHandler.Create<string>(async (link) =>
+        {
+            await DownloadVideo(logger, youtubeApi, link);
+        });
 
-        } while (string.IsNullOrWhiteSpace(playlistUrl));
+        RootCommand rootCommand = new("Muse CLI");
+        rootCommand.AddCommand(downloadCommand);
 
+        await rootCommand.InvokeAsync(args);
+    }
+
+    public static async Task DownloadVideo(LogHandler logger, YoutubeApiClient youtubeApi, string playlistUrl)
+    {
         try
         {
             var startDownloadLog = new LoggerInfo
