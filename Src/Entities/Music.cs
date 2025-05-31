@@ -1,34 +1,36 @@
+
 namespace Muse.Src.Entities
 {
     public class Music
     {
-        public string VideoId { get; set; } = null!;
-        public string Title { get; set; } = null!;
-        public string Description { get; set; } = null!;
-        public string ChannelId { get; set; } = null!;
-        public string ChannelTitle { get; set; } = null!;
-        public string PlaylistId { get; set; } = null!;
-        public int Position { get; set; }
-        public string VideoOwnerChannelTitle { get; set; } = null!;
-        public string VideoOwnerChannelId { get; set; } = null!;
-        public string PublishedAt { get; set; } = null!;
-        public string ThumbnailDefaultUrl { get; set; } = null!;
-        public string ThumbnailMediumUrl { get; set; } = null!;
-        public string ThumbnailHighUrl { get; set; } = null!;
+        public string VideoId { get; }
+        public string Title { get; }
+        public string PublishedAt { get; }
+        public List<Thumb> Thumbs { get; }
+        public List<string> Tags { get; }
+        List<Playlist> AssociatedPlaylists = new List<Playlist>();
 
-        public List<Playlist> AssociatedPlaylist { get; set; } = new List<Playlist>();
-        public override string ToString()
+        public Music(string videoId, string title, string publishedAt, List<Thumb> thumbnails, List<string> tags)
         {
-            return $"Music: {Title} ({VideoId})\n" +
-                   $"Channel: {ChannelTitle} ({ChannelId})\n" +
-                   $"Published: {PublishedAt:yyyy-MM-dd}\n" +
-                   $"Description: {Description}\n" +
-                   $"Thumbnail: {ThumbnailDefaultUrl}";
+            VideoId = videoId;
+            Title = title;
+            PublishedAt = publishedAt;
+            Thumbs = thumbnails;
+            Tags = tags;
         }
 
         public void AddToPlaylist(Playlist playlist)
         {
-            AssociatedPlaylist.Add(playlist);
+            AssociatedPlaylists.Add(playlist);
+        }
+
+        public override string ToString()
+        {
+            return $"Music: {Title} ({VideoId})\n" +
+                   $"Published: {PublishedAt}\n" +
+                   $"Thumbnails: {Thumbs.Count}\n" +
+                   $"Tags: {string.Join(", ", Tags)}";
         }
     }
 }
+

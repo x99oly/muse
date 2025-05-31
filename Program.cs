@@ -6,48 +6,55 @@ static class Program
 {
     public static async Task Main(string[] args)
     {
-        string? apiKey = Environment.GetEnvironmentVariable("YOUTUBE_API_KEY");
+        string apiKey = GetApiKey();
+        string? playlistUrl;
+        using var client = new HttpClient();
+        var downloader = new MusicDownloadService();
+        var youtubeApi = new YoutubeApiClient(client, apiKey, downloader);
 
-        if (apiKey is null)
+        do
         {
-            Console.WriteLine("Missing API Key");
-            return;
-        }
-        Console.Write("Enter the YouTube playlist URL: ");
-        string? playlistUrl = Console.ReadLine();
+            Console.Write("Enter the YouTube URL: ");
+            playlistUrl = Console.ReadLine();
 
-        if (string.IsNullOrEmpty(playlistUrl))
-        {
-            Console.WriteLine("No valid data was informed.");
-            return;
-        }
-        string playlistId = playlistUrl;
+        } while (string.IsNullOrWhiteSpace(playlistUrl));
 
         try
         {
-            using var client = new HttpClient();
-            var youtubeApi = new YoutubeApiClient(client, apiKey);
-
-            List<Music> musics = await youtubeApi.GetListOfMusic(await youtubeApi.GetPlaylistAsync(playlistId));
-
-            var downloader = new MusicDownloadService();
-
-            foreach (Music music in musics)
-            {
-                try
-                {
-                    await downloader.DownloadMusicAsync(music);
-                }
-                catch (Exception e)
-                {
-                    Console.WriteLine(e.Message);
-                }
-            }
+            await youtubeApi.GetAndSaveMusic(playlistUrl);
         }
         catch (Exception ex)
         {
             Console.WriteLine($"Unexpected error: {ex.Message}");
         }
     }
+
+    public static string GetApiKey()
+    {
+        string? apiKey = Environment.GetEnvironmentVariable("YOUTUBE_API_KEY");
+        if (apiKey is not null) return apiKey;
+
+        TryGetAndSaveApiKey();
+
+        return GetApiKey();
+    }
+
+    public static void TryGetAndSaveApiKey()
+    {
+        string? key = null;
+        do
+        {
+            Console.Write("Could not find youtube api key, please enter it (or press 0[zero] to exit):");
+            key = Console.ReadLine();
+            if (key == "0")
+            {
+                Console.WriteLine("Ending program...");
+                Environment.Exit(0);
+            }
+        } while (String.IsNullOrWhiteSpace(key));
+
+        Environment.SetEnvironmentVariable("YOUTUBE_API_KEY", key);
+    }
+
 }
 

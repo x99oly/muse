@@ -3,9 +3,9 @@
 ## ✅ Requisitos Originais
 
 ### Funcionais
-- [ ] Permitir que o usuário informe uma **URL de playlist do YouTube**.
+- [x] Permitir que o usuário informe uma **URL de playlist do YouTube**.
 - [x] Obter todos os links de vídeos da playlist automaticamente.
-- [ ] Permitir baixar apenas **uma música específica** via link de vídeo.
+- [x] Permitir baixar apenas **uma música específica** via link de vídeo.
 - [x] Baixar apenas o **áudio** de cada vídeo.
 - [x] Converter o áudio para o formato **MP3**.
 - [x] Salvar os arquivos com o **nome do vídeo**, de forma organizada.
@@ -42,6 +42,7 @@
 
 - [x] Usar `YoutubeExplode` para busca e download dos vídeos.
 - [x] Usar `FFmpeg` para conversão de áudio.
+- [ ] Logs para observabilidade da aplicação.
 - [ ] Ter **testes unitários** nas partes críticas.
 - [-] Adotar boas práticas de organização de pastas e separação de responsabilidades.
 
