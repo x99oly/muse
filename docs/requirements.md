@@ -6,6 +6,7 @@
 - [x] Permitir que o usuário informe uma **URL de playlist do YouTube**.
 - [x] Obter todos os links de vídeos da playlist automaticamente.
 - [x] Permitir baixar apenas **uma música específica** via link de vídeo.
+- [ ] Suporte a **paginação completa** (mais de 50 músicas da playlist).
 - [x] Baixar apenas o **áudio** de cada vídeo.
 - [x] Converter o áudio para o formato **MP3**.
 - [x] Salvar os arquivos com o **nome do vídeo**, de forma organizada.
@@ -21,7 +22,6 @@
 
 ### Entrada e Configuração
 - [ ] Permitir que o usuário informe a **chave da API do YouTube**.
-- [ ] Suporte a **paginação completa** (mais de 50 músicas da playlist).
 - [ ] Permitir baixar apenas um **intervalo de músicas** (ex: da 3 à 10).
 - [ ] Aceitar argumentos via CLI (`--playlist`, `--apikey`, `--range`, etc).
 

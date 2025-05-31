@@ -41,7 +41,14 @@ namespace Muse.Src.Services
                 return;
             }
 
-            await _youtube.Videos.DownloadAsync(url, outputPath);
+            try
+            {
+                await _youtube.Videos.DownloadAsync(url, outputPath);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine($"Downloader failed in proccess of {music.Title}: {e.Message}");
+            }
             Console.WriteLine($"{music.Title} - successfully downloaded in {outputPath}.");
         }
     }

@@ -1,4 +1,3 @@
-using Muse.Src.Interfaces;
 using Muse.Src.Entities;
 using System.Text.Json;
 
@@ -13,20 +12,29 @@ namespace Muse.Src.Factories
             JsonElement snippet = item.GetProperty("snippet");
             JsonElement thumbnails = snippet.GetProperty("thumbnails");
 
-            return new Playlist
+            List<Thumb> thumbs = new List<Thumb>();
+
+            foreach (JsonProperty thumbProp in thumbnails.EnumerateObject())
             {
-                Id = item.GetProperty("id").GetString()!,
-                Title = snippet.GetProperty("title").GetString()!,
-                Description = snippet.GetProperty("description").GetString()!,
-                ChannelId = snippet.GetProperty("channelId").GetString()!,
-                ChannelTitle = snippet.GetProperty("channelTitle").GetString()!,
-                PublishedAt = snippet.GetProperty("publishedAt").GetDateTime(),
-                ThumbnailDefaultUrl = thumbnails.GetProperty("default").GetProperty("url").GetString()!,
-                ThumbnailMediumUrl = thumbnails.GetProperty("medium").GetProperty("url").GetString()!,
-                ThumbnailHighUrl = thumbnails.GetProperty("high").GetProperty("url").GetString()!,
-                ThumbnailStandardUrl = thumbnails.TryGetProperty("standard", out JsonElement standard) ? standard.GetProperty("url").GetString()! : "",
-                ThumbnailMaxresUrl = thumbnails.TryGetProperty("maxres", out JsonElement maxres) ? maxres.GetProperty("url").GetString()! : ""
-            };
+                JsonElement thumbElement = thumbProp.Value;
+
+                string url = thumbElement.GetProperty("url").GetString() ?? "";
+                string width = thumbElement.TryGetProperty("width", out var w) ? w.GetInt32().ToString() : "0";
+                string height = thumbElement.TryGetProperty("height", out var h) ? h.GetInt32().ToString() : "0";
+
+                thumbs.Add(new Thumb(url, width, height));
+            }
+
+            return new Playlist(
+                id: item.GetProperty("id").GetString() ?? "",
+                title: snippet.GetProperty("title").GetString() ?? "",
+                description: snippet.GetProperty("description").GetString() ?? "",
+                channelId: snippet.GetProperty("channelId").GetString() ?? "",
+                channelTitle: snippet.GetProperty("channelTitle").GetString() ?? "",
+                publishedAt: snippet.GetProperty("publishedAt").GetDateTime(),
+                thumbs: thumbs
+            );
         }
+
     }
 }

@@ -43,46 +43,58 @@ namespace Muse.Src.Clients
             string url = $"https://www.googleapis.com/youtube/v3/videos?part=snippet&id={id}&key={_apiKey}";
             var response = await _client.GetAsync(url);
             var content = await response.Content.ReadAsStringAsync();
-            return new MusicFactory().Create(content);
+            return new MusicFactory().Create(content).FirstOrDefault()!;
         }
 
         private async Task<List<Music>> GetListOfMusic(string id)
         {
             Playlist playlist = await GetPlaylistAsync(id);
 
-            var response = await _client.GetAsync(
-                $"https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId={playlist.Id}&maxResults=50&key={_apiKey}"
-            );
-            var content = await response.Content.ReadAsStringAsync();
+            var allMusic = new List<Music>();
+            string? nextPageToken = null;
 
-            return await GetListOfMusic(content, playlist);
+            do
+            {
+                string url = $"https://www.googleapis.com/youtube/v3/playlistItems?part=snippet&playlistId={playlist.Id}&maxResults=50&key={_apiKey}";
+
+                if (!string.IsNullOrEmpty(nextPageToken))
+                    url += $"&pageToken={nextPageToken}";
+
+                var response = await _client.GetAsync(url);
+                var content = await response.Content.ReadAsStringAsync();
+
+                var musicBatch = await GetListOfMusic(content, playlist);
+                allMusic.AddRange(musicBatch);
+
+                using JsonDocument doc = JsonDocument.Parse(content);
+                nextPageToken = doc.RootElement.TryGetProperty("nextPageToken", out var tokenElem)
+                    ? tokenElem.GetString()
+                    : null;
+
+            } while (!string.IsNullOrEmpty(nextPageToken));
+
+            return allMusic;
         }
 
         private async Task<List<Music>> GetListOfMusic(string json, Playlist playlist)
         {
-            using JsonDocument doc = JsonDocument.Parse(json);
-            JsonElement root = doc.RootElement;
-            JsonElement items = root.GetProperty("items");
-
-            List<Music> musics = new();
             MusicFactory mf = new MusicFactory();
+            List<Music> musics = mf.Create(json);
 
-            foreach (JsonElement item in items.EnumerateArray())
+            foreach (var m in musics)
             {
-                Music m = mf.Create(item.GetRawText());
                 m.AddToPlaylist(playlist);
-                musics.Add(m);
                 await _downloader.DownloadMusicAsync(m);
             }
 
             return musics;
         }
 
+
         private async Task<Playlist> GetPlaylistAsync(string id)
         {
-            var response = await _client.GetAsync(
-                $"https://www.googleapis.com/youtube/v3/playlists?part=snippet&id={id}&key={_apiKey}"
-            );
+            string url = $"https://www.googleapis.com/youtube/v3/playlists?part=snippet&id={id}&key={_apiKey}";
+            var response = await _client.GetAsync(url);
             var content = await response.Content.ReadAsStringAsync();
             return new PlaylistFactory().Create(content);
         }

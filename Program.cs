@@ -1,5 +1,4 @@
 ﻿using Muse.Src.Services;
-using Muse.Src.Entities;
 using Muse.Src.Clients;
 
 static class Program
@@ -23,9 +22,9 @@ static class Program
         {
             await youtubeApi.GetAndSaveMusic(playlistUrl);
         }
-        catch (Exception ex)
+        catch (Exception e)
         {
-            Console.WriteLine($"Unexpected error: {ex.Message}");
+            Console.WriteLine($"Unexpected error: {e.Message}\n{e.StackTrace}");
         }
     }
 
