@@ -5,51 +5,118 @@ using Muse.Src.Factories;
 using System.Web;
 using Muse.Src.Services;
 
-
 namespace Muse.Src.Clients
 {
     public class YoutubeApiClient
     {
         private readonly HttpClient _client;
         private readonly string _apiKey;
+        private readonly MusicDownloadService _downloader;
+        private readonly ILog _logger;
 
-        private MusicDownloadService _downloader;
-
-        public YoutubeApiClient(HttpClient client, string apiKey, MusicDownloadService downloader)
+        public YoutubeApiClient(HttpClient client, string apiKey, MusicDownloadService downloader, ILog logger)
         {
             _client = client;
             _apiKey = apiKey;
             _downloader = downloader;
+            _logger = logger;
         }
 
         public async Task GetAndSaveMusic(string url)
         {
+            var log = new LoggerInfo
+            {
+                Caller = "YoutubeApiClient/GetAndSaveMusic",
+                Message = $"Starting processing for URL: {url}"
+            };
+            _logger.Info(log);
+
             bool isPlaylist;
             string id = GetIdFromUrl(url, out isPlaylist);
 
-            if (!isPlaylist)
+            log = new LoggerInfo
             {
-                Music music = await GetMusicAsync(id);
-                await _downloader.DownloadMusicAsync(music);
+                Caller = "YoutubeApiClient/GetAndSaveMusic",
+                Message = isPlaylist ? $"Detected playlist with ID: {id}" : $"Detected single video with ID: {id}"
+            };
+            _logger.Info(log);
+
+            try
+            {
+                if (!isPlaylist)
+                {
+                    Music music = await GetMusicAsync(id);
+                    await _downloader.DownloadMusicAsync(music);
+
+                    log = new LoggerInfo
+                    {
+                        Caller = "YoutubeApiClient/GetAndSaveMusic",
+                        Message = $"Downloaded single video: {music.Title}"
+                    };
+                    _logger.Info(log);
+                }
+                else
+                {
+                    List<Music> musics = await GetListOfMusic(id);
+
+                    log = new LoggerInfo
+                    {
+                        Caller = "YoutubeApiClient/GetAndSaveMusic",
+                        Message = $"Downloaded {musics.Count} videos from playlist."
+                    };
+                    _logger.Info(log);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                List<Music> musics = await GetListOfMusic(id);   
+                var errorLog = new LoggerInfo
+                {
+                    Caller = "YoutubeApiClient/GetAndSaveMusic",
+                    Message = $"Error while processing URL: {ex.Message}"
+                };
+                _logger.Error(errorLog);
+                throw;
             }
         }
 
         private async Task<Music> GetMusicAsync(string id)
         {
+            var log = new LoggerInfo
+            {
+                Caller = "YoutubeApiClient/GetMusicAsync",
+                Message = $"Fetching video details for ID: {id}"
+            };
+            _logger.Debug(log);
+
             string url = $"https://www.googleapis.com/youtube/v3/videos?part=snippet&id={id}&key={_apiKey}";
             var response = await _client.GetAsync(url);
             var content = await response.Content.ReadAsStringAsync();
-            return new MusicFactory().Create(content).FirstOrDefault()!;
+
+            var music = new MusicFactory(_logger).Create(content).FirstOrDefault();
+
+            if (music == null)
+            {
+                var warnLog = new LoggerInfo
+                {
+                    Caller = "YoutubeApiClient/GetMusicAsync",
+                    Message = $"No video found for ID: {id}"
+                };
+                _logger.Warn(warnLog);
+            }
+
+            return music!;
         }
 
         private async Task<List<Music>> GetListOfMusic(string id)
         {
-            Playlist playlist = await GetPlaylistAsync(id);
+            var log = new LoggerInfo
+            {
+                Caller = "YoutubeApiClient/GetListOfMusic",
+                Message = $"Fetching playlist details for ID: {id}"
+            };
+            _logger.Debug(log);
 
+            Playlist playlist = await GetPlaylistAsync(id);
             var allMusic = new List<Music>();
             string? nextPageToken = null;
 
@@ -73,12 +140,26 @@ namespace Muse.Src.Clients
 
             } while (!string.IsNullOrEmpty(nextPageToken));
 
+            var infoLog = new LoggerInfo
+            {
+                Caller = "YoutubeApiClient/GetListOfMusic",
+                Message = $"Completed fetching playlist with {allMusic.Count} videos."
+            };
+            _logger.Info(infoLog);
+
             return allMusic;
         }
 
         private async Task<List<Music>> GetListOfMusic(string json, Playlist playlist)
         {
-            MusicFactory mf = new MusicFactory();
+            var log = new LoggerInfo
+            {
+                Caller = "YoutubeApiClient/GetListOfMusic(json, playlist)",
+                Message = $"Processing batch of videos from playlist {playlist.Id}"
+            };
+            _logger.Debug(log);
+
+            MusicFactory mf = new MusicFactory(_logger);
             List<Music> musics = mf.Create(json);
 
             foreach (var m in musics)
@@ -90,27 +171,53 @@ namespace Muse.Src.Clients
             return musics;
         }
 
-
         private async Task<Playlist> GetPlaylistAsync(string id)
         {
+            var log = new LoggerInfo
+            {
+                Caller = "YoutubeApiClient/GetPlaylistAsync",
+                Message = $"Fetching playlist metadata for ID: {id}"
+            };
+            _logger.Debug(log);
+
             string url = $"https://www.googleapis.com/youtube/v3/playlists?part=snippet&id={id}&key={_apiKey}";
             var response = await _client.GetAsync(url);
             var content = await response.Content.ReadAsStringAsync();
-            return new PlaylistFactory().Create(content);
+            return new PlaylistFactory(_logger).Create(content);
         }
 
         private string GetIdFromUrl(string url, out bool isPlaylist)
         {
             string? res = ExtractIdFromUrl(url, out isPlaylist);
-            if (res is null) throw new ArgumentException("Unable to retrieve video ID.");
+            if (res is null)
+            {
+                var errorLog = new LoggerInfo
+                {
+                    Caller = "YoutubeApiClient/GetIdFromUrl",
+                    Message = $"Unable to retrieve video ID from URL: {url}"
+                };
+                _logger.Error(errorLog);
+
+                throw new ArgumentException("Unable to retrieve video ID.");
+            }
 
             return res;
         }
 
         private string? ExtractIdFromUrl(string url, out bool isPlaylist)
         {
-            if (String.IsNullOrWhiteSpace(url))
+            if (string.IsNullOrWhiteSpace(url))
+            {
+                var errorLog = new LoggerInfo
+                {
+                    Caller = "YoutubeApiClient/ExtractIdFromUrl",
+                    Message = "URL was not informed."
+                };
+                _logger.Error(errorLog);
+
                 throw new InvalidOperationException("Url wasn't informed.");
+            }
+
             isPlaylist = false;
             try
             {
@@ -124,12 +231,15 @@ namespace Muse.Src.Clients
             }
             catch (UriFormatException e)
             {
+                var errorLog = new LoggerInfo
+                {
+                    Caller = "YoutubeApiClient/ExtractIdFromUrl",
+                    Message = $"Parse of url failed: {e.Message}"
+                };
+                _logger.Error(errorLog);
+
                 throw new UriFormatException($"Parse of url failed: {e.Message}");
             }
         }
-
     }
 }
-
-
-

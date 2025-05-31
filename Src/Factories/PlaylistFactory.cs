@@ -1,12 +1,27 @@
 using Muse.Src.Entities;
+using Muse.Src.Interfaces;
 using System.Text.Json;
 
 namespace Muse.Src.Factories
 {
     class PlaylistFactory : IFactory<Playlist, string>
     {
+        private readonly ILog _logger;
+
+        public PlaylistFactory(ILog logger)
+        {
+            _logger = logger;
+        }
+
         public Playlist Create(string json)
         {
+            var logStart = new LoggerInfo
+            {
+                Caller = "PlaylistFactory/Create",
+                Message = "Starting parsing JSON to Playlist"
+            };
+            _logger.Debug(logStart);
+
             using JsonDocument playlistResponse = JsonDocument.Parse(json);
             JsonElement item = playlistResponse.RootElement.GetProperty("items")[0];
             JsonElement snippet = item.GetProperty("snippet");
@@ -25,7 +40,7 @@ namespace Muse.Src.Factories
                 thumbs.Add(new Thumb(url, width, height));
             }
 
-            return new Playlist(
+            var playlist = new Playlist(
                 id: item.GetProperty("id").GetString() ?? "",
                 title: snippet.GetProperty("title").GetString() ?? "",
                 description: snippet.GetProperty("description").GetString() ?? "",
@@ -34,7 +49,15 @@ namespace Muse.Src.Factories
                 publishedAt: snippet.GetProperty("publishedAt").GetDateTime(),
                 thumbs: thumbs
             );
-        }
 
+            var logEnd = new LoggerInfo
+            {
+                Caller = "PlaylistFactory/Create",
+                Message = $"Finished parsing JSON. Created Playlist with id: {playlist.Id}, title: {playlist.Title}"
+            };
+            _logger.Info(logEnd);
+
+            return playlist;
+        }
     }
 }

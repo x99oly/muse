@@ -2,54 +2,60 @@ using Muse.Src.Extensions;
 using YoutubeExplode;
 using YoutubeExplode.Converter;
 using Muse.Src.Entities;
-using System.IO;
+using Muse.Src.Interfaces;
+using Muse.Src.Handlers;
 
 namespace Muse.Src.Services
 {
     public class MusicDownloadService
     {
         private readonly YoutubeClient _youtube = new YoutubeClient();
-        private readonly string _musicsFolder;
+        private readonly FileHandler _fh;
+        private readonly ILog _logger;
 
-        public MusicDownloadService()
+        public MusicDownloadService(ILog logger, FileHandler fh)
         {
-            string basePath = Directory.GetCurrentDirectory();
-            string projectRoot = Path.Combine(basePath, @""); 
-            _musicsFolder = Path.GetFullPath(Path.Combine(projectRoot, "public", "musics"));
-
-            CreateFolder();
-        }
-
-        private void CreateFolder()
-        {
-            if (!Directory.Exists(_musicsFolder))
-            {
-                Directory.CreateDirectory(_musicsFolder);
-                Console.WriteLine($"Pasta criada: {_musicsFolder}");
-            }
+            _logger = logger;
+            _fh = fh;
+            _fh.CreateDirectory("musics");
         }
 
         public async Task DownloadMusicAsync(Music music)
         {
             string url = $"https://youtube.com/watch?v={music.VideoId}";
             string title = music.Title.SanitizeFileName();
-            string outputPath = Path.Combine(_musicsFolder, $"{title}.mp3");
+            string relativePath = Path.Combine("musics", $"{title}.mp3");
 
-            if (File.Exists(outputPath))
+            if (File.Exists(relativePath))
             {
-                Console.WriteLine($"{music.Title} - already downloaded. Skipping.");
+                _logger.Debug(new LoggerInfo
+                {
+                    Caller = "MusicDownloadService/DownloadMusicAsync",
+                    Message = $"{music.Title} already downloaded. Skipping."
+                });
                 return;
             }
 
             try
             {
-                await _youtube.Videos.DownloadAsync(url, outputPath);
+                string path = Path.Combine(_fh.PublicDir, relativePath);
+                await _youtube.Videos.DownloadAsync(url, path);
+                _logger.Info(new LoggerInfo
+                {
+                    Caller = "MusicDownloadService/DownloadMusicAsync",
+                    Message = $"{music.Title} successfully downloaded at {relativePath}."
+                });
             }
             catch (Exception e)
             {
-                Console.WriteLine($"Downloader failed in proccess of {music.Title}: {e.Message}");
+                _logger.Error(new LoggerInfo
+                {
+                    Caller = "MusicDownloadService/DownloadMusicAsync",
+                    Message = $"Download failed for {music.Title}: {e.Message}"
+                });
             }
-            Console.WriteLine($"{music.Title} - successfully downloaded in {outputPath}.");
         }
     }
+
 }
+

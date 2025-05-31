@@ -1,18 +1,38 @@
 ﻿using Muse.Src.Services;
 using Muse.Src.Clients;
+using Muse.Src.Handlers;
+using Muse.Src.Entities;
 
 static class Program
 {
     public static async Task Main(string[] args)
     {
-        string apiKey = GetApiKey();
+        var fileHandler = new FileHandler();
+        LogHandler logger = new LogHandler(true, true, fileHandler);
+
+        // Log inicial da execução
+        var startLog = new LoggerInfo
+        {
+            Caller = "Program/Main",
+            Message = "Application started"
+        };
+        logger.Info(startLog);
+
+        string apiKey = new ApiKeyHandler(logger).GetApiKey();
         string? playlistUrl;
         using var client = new HttpClient();
-        var downloader = new MusicDownloadService();
-        var youtubeApi = new YoutubeApiClient(client, apiKey, downloader);
+        var downloader = new MusicDownloadService(logger, fileHandler);
+        var youtubeApi = new YoutubeApiClient(client, apiKey, downloader, logger);
 
         do
         {
+            var inputLog = new LoggerInfo
+            {
+                Caller = "Program/Main",
+                Message = "Requesting YouTube URL from user"
+            };
+            logger.Info(inputLog);
+
             Console.Write("Enter the YouTube URL: ");
             playlistUrl = Console.ReadLine();
 
@@ -20,40 +40,30 @@ static class Program
 
         try
         {
+            var startDownloadLog = new LoggerInfo
+            {
+                Caller = "Program/Main",
+                Message = $"Starting music download for URL: {playlistUrl}"
+            };
+            logger.Info(startDownloadLog);
+
             await youtubeApi.GetAndSaveMusic(playlistUrl);
+
+            var successLog = new LoggerInfo
+            {
+                Caller = "Program/Main",
+                Message = "Music download finished successfully"
+            };
+            logger.Info(successLog);
         }
         catch (Exception e)
         {
-            Console.WriteLine($"Unexpected error: {e.Message}\n{e.StackTrace}");
+            var errorLog = new LoggerInfo
+            {
+                Caller = "Program/Main",
+                Message = $"Unexpected error: {e.Message}\n{e.StackTrace}"
+            };
+            logger.Error(errorLog);
         }
     }
-
-    public static string GetApiKey()
-    {
-        string? apiKey = Environment.GetEnvironmentVariable("YOUTUBE_API_KEY");
-        if (apiKey is not null) return apiKey;
-
-        TryGetAndSaveApiKey();
-
-        return GetApiKey();
-    }
-
-    public static void TryGetAndSaveApiKey()
-    {
-        string? key = null;
-        do
-        {
-            Console.Write("Could not find youtube api key, please enter it (or press 0[zero] to exit):");
-            key = Console.ReadLine();
-            if (key == "0")
-            {
-                Console.WriteLine("Ending program...");
-                Environment.Exit(0);
-            }
-        } while (String.IsNullOrWhiteSpace(key));
-
-        Environment.SetEnvironmentVariable("YOUTUBE_API_KEY", key);
-    }
-
 }
-
