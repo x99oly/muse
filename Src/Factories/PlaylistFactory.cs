@@ -15,12 +15,7 @@ namespace Muse.Src.Factories
 
         public Playlist Create(string json)
         {
-            var logStart = new LoggerInfo
-            {
-                Caller = "PlaylistFactory/Create",
-                Message = "Starting parsing JSON to Playlist"
-            };
-            _logger.Debug(logStart);
+            _logger.Debug("Starting parsing JSON to Playlist");
 
             using JsonDocument playlistResponse = JsonDocument.Parse(json);
             JsonElement item = playlistResponse.RootElement.GetProperty("items")[0];
@@ -50,12 +45,7 @@ namespace Muse.Src.Factories
                 thumbs: thumbs
             );
 
-            var logEnd = new LoggerInfo
-            {
-                Caller = "PlaylistFactory/Create",
-                Message = $"Finished parsing JSON. Created Playlist with id: {playlist.Id}, title: {playlist.Title}"
-            };
-            _logger.Info(logEnd);
+            _logger.Info($"Finished parsing JSON. Created Playlist with id: {playlist.Id}, title: {playlist.Title}");
 
             return playlist;
         }

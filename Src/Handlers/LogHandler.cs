@@ -1,20 +1,23 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.CompilerServices;
 using Microsoft.Extensions.Logging;
 using Muse.Src.Interfaces;
 using Muse.Src.Enums;
-using Muse.Src.Entities;
 
 namespace Muse.Src.Handlers
 {
-    public class LogHandler: ILog
+    public class LogHandler : ILog
     {
         private readonly FileHandler _fh;
-        private ILogger _logger;
-        private ILoggerFactory _loggerFactory;
-        private bool _isToPrintLog;
-        private bool _isVerbose;
-        private Dictionary<int, int> _logs = new Dictionary<int, int>();
-        private string _logDirectory = "logs";
-        private int _logIdLength = 9;
+        private readonly ILogger _logger;
+        private readonly ILoggerFactory _loggerFactory;
+        private readonly bool _isToPrintLog;
+        private readonly bool _isVerbose;
+        private readonly Dictionary<int, int> _logs = new Dictionary<int, int>();
+        private readonly string _logDirectory = "logs";
+        private readonly int _logIdLength = 9;
 
         public LogHandler(bool isVerbose, bool isToPrintLog, FileHandler fh)
         {
@@ -25,64 +28,62 @@ namespace Muse.Src.Handlers
             _loggerFactory = LoggerFactory.Create(builder =>
             {
                 builder.AddConsole();
-                if (_isVerbose)
-                    builder.SetMinimumLevel(LogLevel.Debug);
-                else
-                    builder.SetMinimumLevel(LogLevel.Information);
+                builder.SetMinimumLevel(_isVerbose ? LogLevel.Debug : LogLevel.Information);
             });
 
             _logger = _loggerFactory.CreateLogger<LogHandler>();
 
-            Info(new LoggerInfo
+            Info("LogHandler created with success!");
+        }
+
+        public void Info(string message, [CallerFilePath] string file = "", [CallerMemberName] string member = "", [CallerLineNumber] int line = 0) => Log(LogLevelEnum.Info, message, null, file, member, line);
+
+        public void Warn(string message, [CallerFilePath] string file = "", [CallerMemberName] string member = "", [CallerLineNumber] int line = 0) => Log(LogLevelEnum.Warn, message, null, file, member, line);
+
+        public void Error(string message, [CallerFilePath] string file = "", [CallerMemberName] string member = "", [CallerLineNumber] int line = 0) => Log(LogLevelEnum.Error, message, null, file, member, line);
+
+        public void Error(string message, Exception ex, [CallerFilePath] string file = "", [CallerMemberName] string member = "", [CallerLineNumber] int line = 0) => Log(LogLevelEnum.Error, message, ex, file, member, line);
+
+        public void Critical(string message, [CallerFilePath] string file = "", [CallerMemberName] string member = "", [CallerLineNumber] int line = 0) => Log(LogLevelEnum.Critical, message, null, file, member, line);
+
+        public void Debug(string message, [CallerFilePath] string file = "", [CallerMemberName] string member = "", [CallerLineNumber] int line = 0) => Log(LogLevelEnum.Debug, message, null, file, member, line);
+
+        public void Trace(string message, [CallerFilePath] string file = "", [CallerMemberName] string member = "", [CallerLineNumber] int line = 0) => Log(LogLevelEnum.Trace, message, null, file, member, line);
+
+        private void Log(LogLevelEnum level, string message, Exception? ex, string file, string member, int line)
+        {
+            int id = GetLogId();
+            string className = Path.GetFileNameWithoutExtension(file);
+            string caller = $"File: {file}, Class: {className}, Method: {member}, Line: {line}";
+            
+            if (ex != null)
             {
-                Caller = "LogHandler",
-                Message = "LogHandler created with success!"
-            });
-        }
+                caller += $", Exception: {ex.GetType().Name}";
+                message += $" | Exception Message: {ex.Message} | StackTrace: {ex.StackTrace}";
+            }
+            string content = $"{level.ToString().PadRight(8)} - Id: {id}, Timestamp: {DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}, {caller}, Message: {message}";
 
-        public void Info(ILoggerInfo log)
-        {
-            log.SetLevel(LogLevelEnum.Info);
-            Log(log);
-        }
-
-        public void Warn(ILoggerInfo log)
-        {
-            log.SetLevel(LogLevelEnum.Warn);
-            Log(log);
-        }
-
-        public void Error(ILoggerInfo log)
-        {
-            log.SetLevel(LogLevelEnum.Error);
-            Log(log);
-        }
-
-        public void Debug(ILoggerInfo log)
-        {
-            log.SetLevel(LogLevelEnum.Debug);
-            Log(log);
-        }
-
-        public void Critical(ILoggerInfo log)
-        {
-            log.SetLevel(LogLevelEnum.Critical);
-            Log(log);
-        }
-
-        public void Trace(ILoggerInfo log)
-        {
-            log.SetLevel(LogLevelEnum.Trace);
-            Log(log);
-        }
-        private void Log(ILoggerInfo log)
-        {
-            log.SetId(GetLogId());
-            string content = log.GetLog();
             if (_isToPrintLog)
-                _logger.LogInformation(content);
+            {
+                string pContent = content;
+                if (!_isVerbose)
+                {
+                    caller = $"Class: {className}, Method: {member}, Line: {line}";
+                    pContent = $"{level.ToString().PadRight(8)} - Id: {id}, Timestamp: {DateTime.Now:yyyy-MM-dd HH:mm:ss.fff}, {caller}, Message: {message}";
+                }
+                    
+                switch (level)
+                    {
+                        case LogLevelEnum.Info: _logger.LogInformation(pContent); break;
+                        case LogLevelEnum.Warn: _logger.LogWarning(pContent); break;
+                        case LogLevelEnum.Error: _logger.LogError(pContent); break;
+                        case LogLevelEnum.Debug: _logger.LogDebug(pContent); break;
+                        case LogLevelEnum.Critical: _logger.LogCritical(pContent); break;
+                        case LogLevelEnum.Trace: _logger.LogTrace(pContent); break;
+                    }
+            }
 
-            _fh.SaveFile(Path.Combine(_logDirectory,"logs.txt"), content, false);
+            _fh.SaveFile(Path.Combine(_logDirectory, "logs.txt"), content, false);
         }
 
         private int GetLogId()
@@ -100,6 +101,5 @@ namespace Muse.Src.Handlers
             }
             return newId;
         }
-
     }
 }

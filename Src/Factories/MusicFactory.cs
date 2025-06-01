@@ -15,24 +15,14 @@ namespace Muse.Src.Factories
 
         public List<Music> Create(string json)
         {
-            var musicList = new List<Music>();
+            _logger.Debug("Starting parsing JSON to Music list");
 
-            var logStart = new LoggerInfo
-            {
-                Caller = "MusicFactory/Create",
-                Message = "Starting parsing JSON to Music list"
-            };
-            _logger.Debug(logStart);
+            var musicList = new List<Music>();
 
             using JsonDocument doc = JsonDocument.Parse(json);
             JsonElement items = doc.RootElement.GetProperty("items");
 
-            var logItemsCount = new LoggerInfo
-            {
-                Caller = "MusicFactory/Create",
-                Message = $"Found {items.GetArrayLength()} items in JSON"
-            };
-            _logger.Debug(logItemsCount);
+            _logger.Debug($"Found {items.GetArrayLength()} items in JSON");
 
             foreach (JsonElement item in items.EnumerateArray())
             {
@@ -77,12 +67,7 @@ namespace Muse.Src.Factories
                 musicList.Add(new Music(videoId, title, publishedAt, thumbnails, tags));
             }
 
-            var logEnd = new LoggerInfo
-            {
-                Caller = "MusicFactory/Create",
-                Message = $"Finished parsing JSON. Created {musicList.Count} music entries."
-            };
-            _logger.Info(logEnd);
+            _logger.Info($"Finished parsing JSON. Created {musicList.Count} music entries.");
 
             return musicList;
         }

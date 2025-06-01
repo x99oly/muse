@@ -18,6 +18,8 @@ namespace Muse.Src.Handlers
             string? apiKey = Environment.GetEnvironmentVariable("YOUTUBE_API_KEY");
             if (apiKey is not null) return apiKey;
 
+            _logger.Info("Could not find YouTube API key, please enter it (or press 0[zero] to exit):");
+
             TryGetAndSaveApiKey();
 
             return GetApiKey();
@@ -28,23 +30,10 @@ namespace Muse.Src.Handlers
             string? key = null;
             do
             {
-                var logInfo = new LoggerInfo
-                {
-                    Caller = "ApiKeyHandler/TryGetAndSaveApiKey",
-                    Message = "Could not find YouTube API key, please enter it (or press 0[zero] to exit):"
-                };
-                _logger.Info(logInfo);
-
                 key = Console.ReadLine();
                 if (key == "0")
                 {
-                    var exitLog = new LoggerInfo
-                    {
-                        Caller = "ApiKeyHandler/TryGetAndSaveApiKey",
-                        Message = "Ending program..."
-                    };
-                    _logger.Info(exitLog);
-
+                    _logger.Info("Ending program...");
                     Environment.Exit(0);
                 }
             } while (string.IsNullOrWhiteSpace(key));
