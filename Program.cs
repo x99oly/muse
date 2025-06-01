@@ -43,6 +43,11 @@ static class Program
         RootCommand rootCommand = new("Muse CLI");
         rootCommand.AddCommand(downloadCommand);
 
+        logger.Info(new LoggerInfo
+        {
+            Caller = "Program/Main",
+            Message = "CLI commands configured."
+        });
         await rootCommand.InvokeAsync(args);
     }
 

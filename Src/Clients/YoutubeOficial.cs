@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Muse.Src.Interfaces;
 using Muse.Src.Entities;
 using System.Text.Json;
@@ -24,6 +25,8 @@ namespace Muse.Src.Clients
 
         public async Task GetAndSaveMusic(string url)
         {
+            Stopwatch sw = new();
+
             var log = new LoggerInfo
             {
                 Caller = "YoutubeApiClient/GetAndSaveMusic",
@@ -46,12 +49,15 @@ namespace Muse.Src.Clients
                 if (!isPlaylist)
                 {
                     Music music = await GetMusicAsync(id);
+
+                    sw.Start();
                     await _downloader.DownloadMusicAsync(music);
+                    sw.Stop();
 
                     log = new LoggerInfo
                     {
                         Caller = "YoutubeApiClient/GetAndSaveMusic",
-                        Message = $"Downloaded single video: {music.Title}"
+                        Message = $"Downloaded single video: {music.Title}, ElapsedTime: {sw.ElapsedMilliseconds} ms"
                     };
                     _logger.Info(log);
                 }
