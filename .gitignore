@@ -43,3 +43,4 @@ _ReSharper*/
 
 # Files
 **/public/
+.env

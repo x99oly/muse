@@ -12,7 +12,6 @@ static class Program
         LogHandler logger = new LogHandler(false, true, fileHandler);
 
         logger.Info("Application started");
-        logger.Critical("Só testando isso");
 
         string apiKey = new ApiKeyHandler(logger).GetApiKey();
         using var client = new HttpClient();

@@ -15,7 +15,7 @@ namespace Muse.Src.Handlers
         private readonly ILoggerFactory _loggerFactory;
         private readonly bool _isToPrintLog;
         private readonly bool _isVerbose;
-        private readonly Dictionary<int, int> _logs = new Dictionary<int, int>();
+        private readonly Dictionary<int, int> _logsIds = new Dictionary<int, int>();
         private readonly string _logDirectory = "logs";
         private readonly int _logIdLength = 9;
 
@@ -82,8 +82,9 @@ namespace Muse.Src.Handlers
                         case LogLevelEnum.Trace: _logger.LogTrace(pContent); break;
                     }
             }
-
-            _fh.SaveFile(Path.Combine(_logDirectory, "logs.txt"), content, false);
+            DateTime now = DateTime.Now;
+            string fileName = $"logs-{now.Day}-{now.Month}-{now.Year}.txt";
+            _fh.SaveFile(Path.Combine(_logDirectory, fileName), content, false);
         }
 
         private int GetLogId()
@@ -93,9 +94,9 @@ namespace Muse.Src.Handlers
             while (true)
             {
                 newId = identifier.GetRandomIntId(_logIdLength);
-                if (!_logs.ContainsKey(newId))
+                if (!_logsIds.ContainsKey(newId))
                 {
-                    _logs[newId] = newId;
+                    _logsIds[newId] = newId;
                     break;
                 }
             }
